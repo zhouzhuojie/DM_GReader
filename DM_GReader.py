@@ -23,14 +23,14 @@ class DM_GReader():
         path: the location for storing the pickle of the Pattern Corpus.
         local: to use the local stored corpus?"""
 
-        if local:
-            self.corpus = Corpus.load(path)
-            pp.pprint(self.corpus.search(words=[u'iphone']))
-            return
-
         if path is None:
             print "Please provide with a path to store/load local pickle file."
             return
+
+        if local:
+            self.corpus = Corpus.load(path)
+            return
+
 
         self.target_category = self.categories[category_id]
         continuation = None
@@ -59,4 +59,3 @@ class DM_GReader():
                 break
 
         self.corpus.save(path, update=True)
-
