@@ -16,7 +16,7 @@ class DM_GReader():
         self.categories = self.reader.getCategories()
         self.corpus = Corpus()
 
-    def import_category(self, category_id=3, cont=200, path='/home/zzj/downloads/DM_GReader.pickle', local=False):
+    def import_category(self, category_id=3, cont=200, path=None, local=False):
         """Import the specific category to a Pattern Corpus for future calculation.
         category_id: the integer indicates which category to use.
         cont: the integer tells how many queries to issue to continuously crawl the GReader.
@@ -25,8 +25,11 @@ class DM_GReader():
 
         if local:
             self.corpus = Corpus.load(path)
-            self.corpus.save(path, update=True)
             pp.pprint(self.corpus.search(words=[u'iphone']))
+            return
+
+        if path is None:
+            print "Please provide with a path to store/load local pickle file."
             return
 
         self.target_category = self.categories[category_id]
@@ -55,5 +58,5 @@ class DM_GReader():
                 print 'Finished!'
                 break
 
-        self.corpus.save(path)
+        self.corpus.save(path, update=True)
 
