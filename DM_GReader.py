@@ -4,7 +4,7 @@ import datetime, calendar
 import random
 import requests
 from libgreader import GoogleReader, ClientAuthMethod
-from pattern.vector import Document, Corpus, LEMMA
+from pattern.vector import centroid, distance, Document, Corpus, LEMMA
 from bs4 import BeautifulSoup
 import pprint
 
@@ -87,11 +87,24 @@ class DM_GReader():
 
         Return the ids of the article, here the document name is the article's id.
         Google Reader is using "i=http://www.google.com/reader/api/0/stream/items/contents" to get the content of a specific data.
-
-        TODO How to generate representative articles, here we can only generate an arbitrary article from each cluster. Consider the centrol of the cluster?
+        Now we use the centroid to represent the documents
         """
         self._generate_clusters(k=k)
-        ids = [random.choice(i).name for i in self.clusters]
+
+        doc_list = []
+        # For each cluster, calculate the centroid, and calculate the doc (vector) which is nearest to the centroid.
+        for cluster in self.clusters:
+            c = centroid(cluster)
+            d_min = (cluster[0].vector, c)
+            for doc in cluster:
+                d = distance(doc.vector, c)
+                if distance(doc.vector, c)<d_min:
+                    d_min = d
+                    doc_min = doc
+            doc_list.append(doc_min)
+
+        #ids = [random.choice(i).name for i in self.clusters]
+        ids = [i.name for i in doc_list]
         return ids
 
     def get_article_content(self, ids):
