@@ -13,12 +13,21 @@ Usage
 Example:
 
     import DM_GReader
+    import pprint
+    pp = pprint.PrettyPrinter(indent=4)
+
     Username = 'foobar@gmail.com'
     Password = 'password'
-    dm = DM_GReader.DM_GReader(Username, Password)
-    dm.import_category()
 
-    # For example, Latent space analysis(LSA) over the whole corpus.
+    dm = DM_GReader.DM_GReader(Username, Password)
+    dm.import_category(local=True, path='path')
+
+    # Generate Representative Articles
+    # Given k, e.g. here k=10, generate the most representative 10 articles within one day of the Google Reader subscription.
+    ids = dm.generate_repr_ids(10)
+    pp.pprint([i['items'][0]['title'] for i in dm.get_article_content(ids)]) # Print these 10 articles' title
+
+    # Generate Latent space analysis(LSA) over the whole corpus.
     dm.corpus.lsa = None
     dm.corpus.reduce(100)
 
