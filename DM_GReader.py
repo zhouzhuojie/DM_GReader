@@ -19,12 +19,13 @@ class DM_GReader():
         self.categories = self.reader.getCategories()
         self.corpus = Corpus()
 
-    def import_category(self, category_id=3, path=None, local=False):
+    def import_category(self, category_id=3, path=None, local=False, max_articles=2000):
         """Import the specific category to a Pattern Corpus for future calculation.
         category_id: the integer indicates which category to use.
         cont: the integer tells how many queries to issue to continuously crawl the GReader.
         path: the location for storing the pickle of the Pattern Corpus.
-        local: to use the local stored corpus?"""
+        local: to use the local stored corpus?
+        max_articles: the number of max articles we try to crawl if one day's subscriptions is too much."""
 
         if path is None:
             print "Please provide with a path to store/load local pickle file."
@@ -42,7 +43,7 @@ class DM_GReader():
 
         i = 1
 
-        while 1:
+        while 1 and i<(max_articles/20):
 
             self.target_category_content = self.reader.getCategoryContent(self.target_category, continuation=continuation)
             feeds = self.target_category_content[u'items']
@@ -79,7 +80,7 @@ class DM_GReader():
         p is to control the error of KMEANS, when p=1.0 is faster with small error.
         """
         from pattern.vector import KMEANS, KMPP
-        self.clusters = self.corpus.cluster(method=KMEANS, k=10, seed=KMPP, p=1.0)
+        self.clusters = self.corpus.cluster(method=KMEANS, k=k, seed=KMPP, p=p, iterations=20)
 
     def generate_repr_ids(self, k):
         """
@@ -108,7 +109,9 @@ class DM_GReader():
         return ids
 
     def get_article_content(self, ids):
-        """docstring for get_article_content"""
+        """
+        Use the ids to find the content of the articles through google web content API
+        """
         url = 'http://www.google.com/reader/api/0/stream/items/contents'
         id_handle = 'tag:google.com,2005:reader/item/%s'
 
