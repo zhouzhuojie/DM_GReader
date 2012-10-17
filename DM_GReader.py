@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # *-* coding: UTF-8 *-*
 import datetime, calendar
-import random
 import requests
 from libgreader import GoogleReader, ClientAuthMethod
 from pattern.vector import centroid, distance, Document, Corpus, LEMMA
@@ -74,13 +73,13 @@ class DM_GReader():
 
         self.corpus.save(path, update=True)
 
-    def _generate_clusters(self, k=10, p=1.0):
+    def _generate_clusters(self, k=10, p=0.8):
         """Use KMEANS method by default, and choose the initial k values by KMPP method.
         k is the number of clusters.
         p is to control the error of KMEANS, when p=1.0 is faster with small error.
         """
         from pattern.vector import KMEANS, KMPP
-        self.clusters = self.corpus.cluster(method=KMEANS, k=k, seed=KMPP, p=p, iterations=20)
+        self.clusters = self.corpus.cluster(method=KMEANS, k=k, seed=KMPP, p=p, iterations=10)
 
     def generate_repr_ids(self, k):
         """
