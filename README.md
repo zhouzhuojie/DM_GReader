@@ -1,16 +1,26 @@
-Data mining tools built upon personal Google Reader
+Introduction
 ==========
+DM GReader is a data mining tool built upon personal Google Reader. It is motivated by my overwhelming 1000+ per day new unread articles in Google Reader. DM GReader helps me to cluster these articles into k groups using K-Means algorithm, and returns a "Snapshot of Today" list, which contains k articles from k clusters. Intuitively, it gives me a broad but representative view of the new feeds.
 
+Features
+==========
 * To generate a "snapshot" like feature of one day's summary.
 * To cluster one day's feeds into k groups, focus on users' interests.
-* To score the importance of the articles, detect duplication, similarity calculation and other typical data mining tools.
+* TODO:
+    * Other ways to generate the articles that is interesting to the user.
+    * Implement a web interface.
+    * Implement a database for storing one users' data. Cache the "Snapshot of Today" articles.
+    * Implement a mobile web interface.
 
+Version
+==========
+0.0.1
 
 
 Usage
 ==========
-
 Example:
+
 ```python
 import DM_GReader
 import pprint
@@ -40,9 +50,7 @@ pp.pprint([i['items'][0]['title'] for i in dm.get_article_content(ids)])
 
 This will import the remote Google Reader data and dump it to local pickle data for future use.
 
-Sample Output
--------------
-We compared both the original and latent space analysis (LSA) results below. 
+Sample Output. We compared both the original and latent space analysis (LSA) results below.
 
 <pre>
 
@@ -116,11 +124,11 @@ We compared both the original and latent space analysis (LSA) results below.
 
 </pre>
 
-The results of clustering, for both Original and LSA. One can see that after reducing the corpus to 300 concepts/topics, it significantly shorten the running time.
+The results of clustering approximate 800 articles (mainly the latest one day subscriptions), for both Original and LSA. One can see that after reducing the corpus to 300 concepts/topics, it significantly shorten the running time.
 
 |Running time (s)|k=10|k=20|
 |:-------|:-----:|:-----:|
-|Origianl|97.599|68.585|
+|Original|97.599|68.585|
 |LSA|17.390|27.693|
 
 Credits
