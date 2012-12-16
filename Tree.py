@@ -41,20 +41,6 @@ class Tree(object):
                 raise TypeError('Child of Tree should be a Tree type')
     
     
-    def __setattr__(self, name, value):
-        
-            
-        """
-            Hide the __parent and __children attribute from using dot assignment.
-            To add __children, please use addChild or addChildren method; And
-            node's parent isn't assignable
-        """
-            
-        if name in ('parent', '__parent', 'children'):
-                raise AttributeError("To add children, please use addChild or addChildren method.")
-        else:
-            super().__setattr__(name, value)
-            
     def __str__(self, *args, **kwargs):
         
         return self.data.__str__(*args, **kwargs)

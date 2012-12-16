@@ -1,22 +1,36 @@
 #!/usr/bin/env python
 # *-* coding: UTF-8 *-*
-import datetime, calendar
-import ipdb
+import datetime
+import calendar
 import random
 import numpy as np
-import requests
-from libgreader import GoogleReader, ClientAuthMethod
-from pattern.vector import centroid, distance, Document, Corpus, LEMMA
-from bs4 import BeautifulSoup
 import pprint
+import sys
 from Tree import Tree
 
+try:
+    import requests
+    from libgreader import GoogleReader, ClientAuthMethod
+    from pattern.vector import centroid, distance, Document, Corpus, LEMMA
+    from bs4 import BeautifulSoup
+except ImportError:
+    sys.exit("""You need install these dependencies first!
+                Pakeges:
+                1. requests   # Issue http requesets
+                2. libgreader # Connecting Google reader services
+                3. pattern    # Storing documents into corpus format
+                4. beautifulsoup4 # Paring Html into plain text
+                install them with pip or easy_install.
+                sudo easy_install requests libgreader pattern beautifulsoup4""")
+
 pp = pprint.PrettyPrinter(indent=4)
+
 
 class myTree(Tree):
     def __init__(self, data):
         super(myTree, self).__init__(data)
         self.copied = False
+
 
 class Covertree():
     """Data structure, recommend using distance within (0,1) """
@@ -35,25 +49,25 @@ class Covertree():
             self.levels[0].add(tree_node)
             self.levels[1].add(new_tmp_p)
             return
-        elif i==self.maxlevel-2:
+        elif i == self.maxlevel - 2:
             tree.addChild(tree_node)
             self.levels[-1].add(tree_node)
             return
         else:
             for p in tree.getChildren():
                 d = self.distance(p.data, tree_node.data)
-                if d<2**(-i-1):
+                if d < 2 ** (-i - 1):
                     # Add p to p's children
                     if not p.copied:
                         new_p = myTree(p.data)
                         p.addChild(new_p)
                         p.copied = True
-                        self.levels[i+2].add(new_p)
+                        self.levels[i + 2].add(new_p)
                     # Recursively
-                    self.insert(tree_node, p, i+1)
+                    self.insert(tree_node, p, i + 1)
                     return
             tree.addChild(tree_node)
-            self.levels[i+1].add(tree_node)
+            self.levels[i + 1].add(tree_node)
 
     def merge_levels(self):
         for i, level in enumerate(self.levels):
@@ -61,7 +75,7 @@ class Covertree():
                 if self.levels[i] == set():
                     return
                 data_i = [_.data for _ in self.levels[i]]
-                for item in self.levels[i-1]:
+                for item in self.levels[i - 1]:
                     if item.data not in data_i:
                         self.levels[i].add(item)
 
@@ -73,14 +87,14 @@ class Covertree():
 
     def clustering_from_ct(self, k):
         levels_counts = [len(i) for i in self.levels]
-        if k<=0:
+        if k <= 0:
             print "Invalid k!"
             return
-        elif k==1:
+        elif k == 1:
             return [[i.data for i in self.levels[np.argmax(levels_counts)]]]
         else:
             for i, count in enumerate(levels_counts):
-                if count>=k:
+                if count >= k:
                     centroids = self.levels[i]
                     break
             return self._clustering_from_centroids(centroids, k)
@@ -91,6 +105,7 @@ class Covertree():
 
         def find_all_sub_childrens(tree):
             data_list = set()
+
             def _rec(tree):
                 data_list.add(tree.data)
                 children = tree.getChildren()
@@ -101,19 +116,19 @@ class Covertree():
                 return data_list
             return _rec(tree)
 
-        clusters =  [find_all_sub_childrens(i) for i in centroids]
+        clusters = [find_all_sub_childrens(i) for i in centroids]
 
         no_clusters_to_delete = len(clusters) - k
-        while no_clusters_to_delete>0:
-            num = min(2*no_clusters_to_delete, len(clusters))
-            clusters_merged_index = random.sample(range(len(clusters)),num)
-            num = len(clusters_merged_index)/2
-            if len(clusters_merged_index)%2!=0:
+        while no_clusters_to_delete > 0:
+            num = min(2 * no_clusters_to_delete, len(clusters))
+            clusters_merged_index = random.sample(range(len(clusters)), num)
+            num = len(clusters_merged_index) / 2
+            if len(clusters_merged_index) % 2 != 0:
                 del clusters_merged_index[-1]
             for i in range(num):
-                clusters[clusters_merged_index[i]] = clusters[clusters_merged_index[i]] | clusters[clusters_merged_index[i+num]]
+                clusters[clusters_merged_index[i]] = clusters[clusters_merged_index[i]] | clusters[clusters_merged_index[i + num]]
 
-            clusters_merged_index  = sorted(clusters_merged_index[num:])
+            clusters_merged_index = sorted(clusters_merged_index[num:])
             for offset, index in enumerate(clusters_merged_index):
                 index -= offset
                 del clusters[index]
@@ -122,6 +137,7 @@ class Covertree():
 
         centroids = [i.data for i in centroids]
         return centroids, clusters
+
 
 class DM_GReader():
 
@@ -133,7 +149,7 @@ class DM_GReader():
         self.corpus = Corpus()
         self.method = method
 
-    def import_category(self, category_id=3, path=None, local=False, max_articles=2000):
+    def import_category(self, category_id=0, path=None, local=False, max_articles=2000, days=3):
         """Import the specific category to a Pattern Corpus for future calculation.
         category_id: the integer indicates which category to use.
         cont: the integer tells how many queries to issue to continuously crawl the GReader.
@@ -153,16 +169,16 @@ class DM_GReader():
         continuation = None
 
         # Crawl only the data within one day
-        yesterday = calendar.timegm((datetime.date.today()-datetime.timedelta(days=1)).timetuple())
+        time_threadshold = calendar.timegm((datetime.date.today() - datetime.timedelta(days=days)).timetuple())
 
         i = 1
 
-        while 1 and i<(max_articles/20):
+        while 1 and i < (max_articles / 20):
 
             self.target_category_content = self.reader.getCategoryContent(self.target_category, continuation=continuation)
             feeds = self.target_category_content[u'items']
 
-            if self.target_category_content['updated'] < yesterday:
+            if self.target_category_content['updated'] < time_threadshold:
                 break
 
             feeds_docs = []
@@ -183,7 +199,7 @@ class DM_GReader():
                 print 'Finished!'
                 break
 
-            print i
+            print 'Retrieving %d articles...' % (i * 20)
             i = i + 1
 
         self.corpus.save(path, update=True)
@@ -193,7 +209,7 @@ class DM_GReader():
         k is the number of clusters.
         p is to control the error of KMEANS, when p=1.0 is faster with small error.
         """
-        if self.method=="kmeans":
+        if self.method == "kmeans":
 
             from pattern.vector import KMEANS, KMPP
             self.clusters = self.corpus.cluster(method=KMEANS, k=k, seed=KMPP, p=p, iterations=10)
@@ -204,25 +220,25 @@ class DM_GReader():
                 d_min = (cluster[0].vector, c)
                 for doc in cluster:
                     d = distance(doc.vector, c)
-                    if distance(doc.vector, c)<d_min:
+                    if distance(doc.vector, c) < d_min:
                         d_min = d
                         doc_min = doc
                 doc_list.append(doc_min)
             self.centroids = [i.name for i in doc_list]
             self.clusters = [[i.name for i in cluster] for cluster in self.clusters]
 
-        elif self.method=='covertree':
+        elif self.method == 'covertree':
 
-            def mydistance(doc_name1,doc_name2):
+            def mydistance(doc_name1, doc_name2):
                 v1 = self.corpus.document(doc_name1).vector
                 v2 = self.corpus.document(doc_name2).vector
-                return distance(v1,v2)
+                return distance(v1, v2)
 
             self.covertree = Covertree(mydistance, maxlevel)
 
             for i, doc in enumerate(self.corpus):
                 tree_node = myTree(doc.name)
-                self.covertree.insert(tree_node, self.covertree.ct,0 )
+                self.covertree.insert(tree_node, self.covertree.ct, 0)
 
             self.covertree.merge_levels()
             self.centroids, self.clusters = self.covertree.clustering_from_ct(k)
@@ -241,7 +257,7 @@ class DM_GReader():
 
     def cost(self):
         cost = 0
-        for i,center in enumerate(self.centroids):
+        for i, center in enumerate(self.centroids):
             for doc in self.clusters[i]:
                 cost += distance(self.corpus.document(doc).vector, self.corpus.document(center).vector)
 
@@ -256,7 +272,7 @@ class DM_GReader():
 
         contents = []
         for _id in ids:
-            r = requests.post(url, data={'i':(id_handle %_id)})
+            r = requests.post(url, data={'i': (id_handle % _id)})
             contents.append(r.json)
         return contents
 
