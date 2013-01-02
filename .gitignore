@@ -6,3 +6,4 @@ result.txt
 main_covertree.py
 .dropbox
 DM_GReader_CoverTree.py
+*.pickle
